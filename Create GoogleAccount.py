@@ -81,7 +81,7 @@ def save_account_details(username, password):
         file.write(f"{username}@gmail.com:{password}\n")
     print(f"[SUCCESS] Account details saved to accounts.txt: {username}@gmail.com")
 
-def create_google_account(driver, first_name, last_name, username, password, birth_year):
+def create_google_account(driver, first_name, last_name, username, password, birth_year, delay_seconds):
     """
     Automates the Google account creation process with a more robust, sequential flow.
     """
@@ -92,7 +92,9 @@ def create_google_account(driver, first_name, last_name, username, password, bir
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.NAME, "firstName"))).send_keys(first_name)
         driver.find_element(By.NAME, "lastName").send_keys(last_name)
         print(f"Step 1: Filling in name '{last_name}'")
+        time.sleep(delay_seconds)
         driver.find_element(By.XPATH, "//span[contains(text(),'Next')]").click()
+
 
         # 2. Fill in Birthday and Gender
         print(f"Step 2: Filling in birthday: '{birth_year}' and gender: male")
@@ -103,6 +105,7 @@ def create_google_account(driver, first_name, last_name, username, password, bir
         WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, f"//li[@data-value='{month_value}']"))).click()
         driver.find_element(By.ID, "gender").click()
         WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//li[.//span[text()='Male']]"))).click()
+        time.sleep(delay_seconds)
         driver.find_element(By.XPATH, "//span[contains(text(),'Next')]").click()
 
         # --- START: MODIFIED SECTION ---
@@ -114,6 +117,7 @@ def create_google_account(driver, first_name, last_name, username, password, bir
                 EC.element_to_be_clickable((By.XPATH, "//*[text()='Create a Gmail address']"))
             )
             create_address_button.click()
+            time.sleep(delay_seconds)
             driver.find_element(By.XPATH, "//span[contains(text(),'Next')]").click()
             print("[INFO] Successfully clicked 'Create a Gmail address'.")
 
@@ -135,6 +139,7 @@ def create_google_account(driver, first_name, last_name, username, password, bir
             print(username)
 
             # Click the 'Next' button
+            time.sleep(delay_seconds)
             next_button = WebDriverWait(driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Next')]"))
             )
@@ -161,6 +166,7 @@ def create_google_account(driver, first_name, last_name, username, password, bir
         print(f"Step 5: Setting password: '{password}'")
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.NAME, "Passwd"))).send_keys(password)
         driver.find_element(By.NAME, "PasswdAgain").send_keys(password)
+        time.sleep(delay_seconds)
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(),'Next')]"))).click()
 
 
@@ -219,6 +225,7 @@ def main():
             choice = display_menu()
             if choice == '1':
                 try:
+                    # This loop asks for the number of accounts
                     while True:
                         try:
                             num_accounts = int(input("How many accounts do you want to create? (max 5): "))
@@ -229,7 +236,18 @@ def main():
                         except ValueError:
                             print("Invalid input. Please enter a number.")
 
-                    # --- MODIFIED SECTION STARTS HERE ---
+                    # This new loop asks for the time delay
+                    while True:
+                        try:
+                            delay_seconds = int(input("Enter time delay in seconds (e.g., 3, or 0 for no delay): "))
+                            if delay_seconds >= 0:
+                                break
+                            else:
+                                print("Please enter a positive number or 0.")
+                        except ValueError:
+                            print("Invalid input. Please enter a whole number.")
+
+                   # --- MODIFIED SECTION STARTS HERE ---
 
                     user_agent = get_random_user_agent()
 
@@ -258,7 +276,7 @@ def main():
                         print(f"\n--- Starting Account Creation #{i+1} ---")
                         first_name, last_name, username, password, birth_year = generate_details()
 
-                        if create_google_account(driver, first_name, last_name, username, password, birth_year):
+                        if create_google_account(driver, first_name, last_name, username, password, birth_year, delay_seconds):
                             save_account_details(username, password)
                             successful_creations += 1
                         else:
